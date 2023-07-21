@@ -7,10 +7,15 @@ use Exception;
 use Illuminate\Http\Request;
 use App\Helper\JWT_TOKEN;
 use App\Mail\OTPmail;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\JsonResponse;
+
+use Illuminate\Support\Facades\Password;
+use PHPUnit\Event\Code\Throwable;
+
 class UserController extends Controller
 {
 
@@ -22,19 +27,22 @@ class UserController extends Controller
 
             //request validation
 
-            $validated = Validator::make($request->all(),
-            [
-                'firstName'=> 'alpha:ascii',
-                'lastName'=> 'alpha:ascii',
-                'email' => 'required|email|unique:App\Models\User,email',
-                'password' => 'required|min:8'
-            ],[
-                'email.unique' => 'Already Have an account',
-                'password'=> 'Minimum 8 character required'
-            ]);
+            $validated = Validator::make(
+                $request->all(),
+                [
+                    'firstName' => 'alpha:ascii',
+                    'lastName' => 'alpha:ascii',
+                    'email' => 'required|email|unique:App\Models\User,email',
+                    'password' => 'required|min:8'
+                ],
+                [
+                    'email.unique' => 'Already Have an account',
+                    'password' => 'Minimum 8 character required'
+                ]
+            );
 
-            if ( $validated->fails() ) {
-                return response()->json( ['status' => 'Failed', 'message' => $validated->errors()], 403 );
+            if ($validated->fails()) {
+                return response()->json(['status' => 'Failed', 'message' => $validated->errors()], 403);
             }
 
             User::create([
@@ -54,7 +62,7 @@ class UserController extends Controller
             return response()->json([
                 "status" => "unsuccessfull",
                 "message" => "User Registartion Failed"
-            ]);
+            ], 400);
         }
     }
 
@@ -79,86 +87,135 @@ class UserController extends Controller
             }
         } catch (Exception $e) {
 
-             return response()->json([
+            return response()->json([
                 'status' => 'Failed',
                 'message' => 'Either the email or password is incorrect'
-            ]);
+            ], 401);
         }
     }
 
 
-function sendOTP(Request $request){ 
-
-    $email = $request->input('email');
-    $count = User::where('email','=',$email)->count();
-    $otp = rand(1000,9999);
-    if($count==1)
+    function sendOTP(Request $request)
     {
-        //sed OTP to user email
-        Mail::to($email)->send(new OTPmail($otp));
-        //update the otp in record
-        User::where('email','=',$email)->update(['otp'=>$otp]);
 
-        return response()->json([
-            'status' => 'Success',
-            'message' => "4 digit OTP has been sent to $email. please check your email "
-        ],200);
+        $email = $request->input('email');
+        $count = User::where('email', '=', $email)->count();
+        $otp = rand(1000, 9999);
+        if ($count == 1) {
+            //sed OTP to user email
+            Mail::to($email)->send(new OTPmail($otp));
+            //update the otp in record
+            User::where('email', '=', $email)->update(['otp' => $otp]);
 
-        
+            return response()->json([
+                'status' => 'Success',
+                'message' => "4 digit OTP has been sent to $email. please check your email "
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 'Failed',
+                'message' => 'Unauthorized'
+            ], 401);
+        }
     }
 
-    else{
-        return response()->json([
-            'status' => 'Failed',
-            'message' => 'Unauthorized'
-        ],500);
+    public function verifyOtp(Request $request): JsonResponse
+    {
+        try {
+            //Otp length validation
+            $validator = Validator::make($request->all(), [
+                'otp' => 'required|min:4',
+            ], [
+                'otp' => 'Otp Must be 4 Characters',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['status' => 'Failed', 'message' => $validator->errors()], 400);
+            }
+
+            $otp = $request->otp;
+            $email = $request->email;
+
+            $user = User::where('email', $email)->where('otp', $otp)->first();
+
+            //user find based on email & otp
+            if (!$user) {
+                return response()->json(['status' => 'Failed', 'message' => 'Please enter a valid otp'], 400);
+            }
+
+
+
+            //Otp expired after 5 minutes
+            $expirationTime = strtotime($user->updated_at) + ((60 * 3) + 5);
+            if (time() > $expirationTime) {
+                //otp update
+                $user->update(['otp' => 0]);
+                return response()->json(['status' => 'Failed', 'message' => 'Your Otp expired'], 400);
+            }
+            //otp update
+            $user->update(['otp' => 0]);
+            //create password reset token
+            $reset_token = JWT_TOKEN::reset_token($email);
+            return response()->json(['status' => 'success', 'message' => "Your Otp verify Successfully", 'reset_token' => $reset_token], 200);
+        } catch (\Illuminate\Database\QueryException $ex) {
+
+            return response()->json(['status' => 'Failed', 'message' => 'Database connection error'], 500);
+        } catch (\Throwable $th) {
+
+            return response()->json(['status' => 'Failed', 'message' => 'Unauthorized'], 500);
+        }
+    }
+
+
+
+function resetPassword(Request $request)
+{
+
+    try {
+
+        //password Validation.Must contain Lowercase and Upercase letters
+
+        $validated = Validator::make(
+            $request->all(),
+            [
+                'password ' => ['required', 'confirmed']
+            ],
+            [
+                'password' => 'Password must contain uppercase and lowercase letter'
+
+            ]
+        );
+
+        if ($validated->failed()) {
+            return response()->json(['status' => 'Failed', 'message' => $validated->errors()], 400);
+        }
+
+        $email = $request->header('email');
+        DB::table('users')->where('email', '=', $email)->update(['password' => $request->password]);
+        return response()->json(['status' => 'success', 'message' => 'Password Update Successfully'], 200);
+    } catch (Throwable $th) {
+
+        return response()->json(['status' => 'Failed', 'message' => 'Unauthorized'], 500);
     }
 }
 
-public function verifyOtp( Request $request ): JsonResponse {
-    try {
-        //Otp length validation
-        $validator = Validator::make( $request->all(), [
-            'otp' => 'required|min:4',
-        ], [
-            'otp' => 'Otp Must be 4 Characters',
-        ] );
-        if ( $validator->fails() ) {
-            return response()->json( ['status' => 'Failed', 'message' => $validator->errors()], 400 );
-        }
+function userRegistrationView():View{
 
-        $otp = $request->otp;
-        $email = $request->email;
+    return view('pages.auth.registration-page');
+    
+}
+function userLoginView():View{
+    return view('pages.auth.login-page');
+}
 
-        $user = User::where( 'email', $email )->where( 'otp', $otp )->first();
+function sendOTPview():View{
+    return view('pages.auth.send-otp-page');
+}
 
-        //user find based on email & otp
-        if ( !$user ) {
-            return response()->json( ['status' => 'Failed', 'message' => 'Please enter a valid otp'], 400 );
-        }
-
-       
-
-        //Otp expired after 5 minutes
-        $expirationTime = strtotime( $user->updated_at ) + (  ( 60 * 3 ) + 5 );
-        if ( time() > $expirationTime ) {
-            //otp update
-            $user->update( ['otp' => 0] );
-            return response()->json( ['status' => 'Failed', 'message' => 'Your Otp expired'], 400 );
-        }
-        //otp update
-        $user->update( ['otp' => 0] );
-        //create password reset token
-        $reset_token = JWT_TOKEN::reset_token( $email );
-        return response()->json( ['status' => 'success', 'message' => "Your Otp verify Successfully", 'reset_token' => $reset_token], 200 );
-
-    } catch ( \Illuminate\Database\QueryException $ex ) {
-        
-        return response()->json( ['status' => 'Failed', 'message' => 'Database connection error'], 500 );
-    } catch ( \Throwable $th ) {
-        
-        return response()->json( ['status' => 'Failed', 'message' => 'Unauthorized'], 500 );
-    }
+function verifyOTPview():View{   
+    return view('pages.auth.verify-otp-page');
+}
+function resetPasswordview():View{
+    return view('pages.auth.reset-password-page');
 }
 
 
