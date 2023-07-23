@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\Request;
 use App\Helper\JWT_TOKEN;
 use App\Mail\OTPmail;
+use Illuminate\Console\View\Components\Alert;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -25,7 +26,7 @@ class UserController extends Controller
 
         try {
 
-            //request validation
+           // request validation
 
             $validated = Validator::make(
                 $request->all(),
@@ -36,32 +37,42 @@ class UserController extends Controller
                     'password' => 'required|min:8'
                 ],
                 [
+                    'firstName'=>'Only Aplphabet allowed',
                     'email.unique' => 'Already Have an account',
                     'password' => 'Minimum 8 character required'
                 ]
             );
 
             if ($validated->fails()) {
+                
                 return response()->json(['status' => 'Failed', 'message' => $validated->errors()], 403);
             }
+           
+           
+            
+            
 
-            User::create([
+           
+            echo 'No error till now';
+             User::create([
                 'firstName' => $request->input('firstName'),
                 'lastName' => $request->input('lastName'),
                 'email' => $request->input('email'),
                 'mobile' => $request->input('mobile'),
                 'password' => $request->input('password')
+
             ]);
+           // DB::table('users')->insert($request->input());
 
             return response()->json([
                 "status" => "successfull",
                 "message" => "Your response has been submitted"
             ], 200);
         } catch (Exception $e) {
-
+            
             return response()->json([
-                "status" => "unsuccessfull",
-                "message" => "User Registartion Failed"
+                "status" =>   $e,
+                "message" => "Registartion Failed"
             ], 400);
         }
     }
@@ -108,9 +119,9 @@ class UserController extends Controller
             User::where('email', '=', $email)->update(['otp' => $otp]);
 
             return response()->json([
-                'status' => 'Success',
+                'status' => 'success',
                 'message' => "4 digit OTP has been sent to $email. please check your email "
-            ], 200);
+            ],200);
         } else {
             return response()->json([
                 'status' => 'Failed',
@@ -155,7 +166,7 @@ class UserController extends Controller
             $user->update(['otp' => 0]);
             //create password reset token
             $reset_token = JWT_TOKEN::reset_token($email);
-            return response()->json(['status' => 'success', 'message' => "Your Otp verify Successfully", 'reset_token' => $reset_token], 200);
+            return response()->json(['status' => 'success', 'message' => "Your Otp verify Successfully"], 200)->cookie('token',$reset_token,60*24*30);
         } catch (\Illuminate\Database\QueryException $ex) {
 
             return response()->json(['status' => 'Failed', 'message' => 'Database connection error'], 500);
@@ -163,6 +174,7 @@ class UserController extends Controller
 
             return response()->json(['status' => 'Failed', 'message' => 'Unauthorized'], 500);
         }
+        
     }
 
 
@@ -177,10 +189,10 @@ function resetPassword(Request $request)
         $validated = Validator::make(
             $request->all(),
             [
-                'password ' => ['required', 'confirmed']
+                'password ' => ['required|confirmed|min:8']
             ],
             [
-                'password' => 'Password must contain uppercase and lowercase letter'
+                'password' => 'Password must have of altleast 8 characters '
 
             ]
         );
@@ -190,8 +202,9 @@ function resetPassword(Request $request)
         }
 
         $email = $request->header('email');
-        DB::table('users')->where('email', '=', $email)->update(['password' => $request->password]);
-        return response()->json(['status' => 'success', 'message' => 'Password Update Successfully'], 200);
+        echo $email;
+       $user =  User::where('email', '=', $email)->update(['password' => $request->password]);
+       if($user){ return response()->json(['status' => 'success', 'message' => 'Password Update Successfully'], 200);}
     } catch (Throwable $th) {
 
         return response()->json(['status' => 'Failed', 'message' => 'Unauthorized'], 500);
