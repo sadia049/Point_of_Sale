@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\Request;
 use App\Helper\JWT_TOKEN;
 use App\Mail\OTPmail;
+use Error;
 use Illuminate\Console\View\Components\Alert;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -85,16 +86,16 @@ class UserController extends Controller
 
             $count = User::where('email', '=', $request->input('email'))
                 ->where('password', '=', $request->input('password'))
-                ->count();
+                ->select('id')->first();
 
 
-            if ($count == 1) {
-                $token = JWT_TOKEN::create_token($request->input('email'));
+            if ($count !== null) {
+                $token = JWT_TOKEN::create_token($request->input('email'),$count->id);
                 return response()->json([
                     'status' => 'successfull',
                     'message' => 'Login Successfull',
                     'token' => $token
-                ]);
+                ])->cookie('token',$token,60*24*30);
             }
         } catch (Exception $e) {
 
@@ -231,5 +232,71 @@ function resetPasswordview():View{
     return view('pages.auth.reset-password-page');
 }
 
+function profilePageView(){
+    return View('pages.Dashboard.profile-page');
+}
+
+function userProfile(Request $request){
+
+    $email = $request->header('email');
+    $user = User::where('email','=',$email)->first();
+    if($user){
+        return response()->json([
+
+            'status'=>'success',
+            'message'=>'Request Successfull',
+            'data'=>$user
+
+        ],200);
+    }
+    else
+    {
+        return response()->json([
+
+            'status'=>'Failed',
+            'message'=>'Request Failed',
+            
+
+        ],500);
+    }
+
+}
+
+function updateProfile(Request $request){
+    try{
+
+
+        $email = $request->header('email');
+        $firstName = $request->input('firstName');
+        $lastName = $request->input('lastName');
+        $mobile = $request->input('mobile');
+        $password = $request->input('password');
+    
+        $user = User::where('email','=',$email)->update([
+    
+            'firstName'=>$firstName,
+            'lastName'=>$lastName,
+             'mobile'=>$mobile,
+             'password'=>$password
+        ]);
+    
+        return response()->json([
+              'status'=>'success',
+              'message'=>'profile update successfull'
+    
+        ],200);
+    
+    }  
+    catch(Exception){
+        return response()->json([
+            'status'=>'failed',
+            'message'=>'Something went wrong'
+  
+      ],500);
+    }
+   
+
+
+}
 
 }

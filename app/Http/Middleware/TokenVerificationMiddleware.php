@@ -18,19 +18,21 @@ class TokenVerificationMiddleware
     {
         $token = $request->cookie('token');
         $result = JWT_TOKEN::verify_token($token);
+        echo $token;
         
-        echo $result;
-        if($result=='unauthorized')
+        if($result=='unauthorized' || $result==null)
         {
+              return redirect('/userLogin');
             
-                return response()->json([
-                    'status' => 'Na',
-                    'message' => 'Unauthorized'
-                ],401);
+                // return response()->json([
+                //     'status' => 'Na',
+                //     'message' => 'Unauthorized'
+                // ],401);
             
         }
-        $request->headers->set('email',$result);
-        
+
+        $request->headers->set('email',$result->user_email);
+        $request->headers->set('id',$result->user_id);
 
         return $next($request);
     }

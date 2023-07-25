@@ -1,6 +1,6 @@
 <div class="container">
-    <div class="row">
-        <div class="col-md-10 col-lg-10">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-10 center-screen">
             <div class="card animated fadeIn w-100 p-3">
                 <div class="card-body">
                     <h4>Sign Up</h4>
@@ -9,7 +9,7 @@
                         <div class="row m-0 p-0">
                             <div class="col-md-4 p-2">
                                 <label>Email Address</label>
-                                <input id="email" placeholder="User Email" class="form-control" type="email"/>
+                                <input id="email" placeholder="User Email" class="form-control" type="email" readonly/>
                             </div>
                             <div class="col-md-4 p-2">
                                 <label>First Name</label>
@@ -30,7 +30,7 @@
                         </div>
                         <div class="row m-0 p-0">
                             <div class="col-md-4 p-2">
-                                <button onclick="onRegistration()" class="btn mt-3 w-100  btn-primary">Complete</button>
+                                <button onclick="onUpdate()" class="btn mt-3 w-100  btn-primary">Complete</button>
                             </div>
                         </div>
                     </div>
@@ -41,8 +41,32 @@
 </div>
 
 <script>
+getProfile();
+async function getProfile(){
 
-function onRegistration() {
+ showLoader();
+ let response =  await axios.get('/user-profile');
+ hideLoader();
+ let data = response.data['data'];
+ console.log(data);
+ if(response.status===200){
+    
+    //let data2 = data['data'];
+
+    document.getElementById('email').value=data['email'];
+ } 
+
+
+
+
+
+
+
+
+
+
+}
+function onUpdate() {
 try{
 let email = document.getElementById('email').value;
 let firstName = document.getElementById('firstName').value;
