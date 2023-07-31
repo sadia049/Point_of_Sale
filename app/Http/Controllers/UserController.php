@@ -238,31 +238,17 @@ function profilePageView(){
 
 function userProfile(Request $request){
 
-    $email = $request->header('email');
-    $user = User::where('email','=',$email)->first();
-    if($user){
-        return response()->json([
-
-            'status'=>'success',
-            'message'=>'Request Successfull',
-            'data'=>$user
-
-        ],200);
-    }
-    else
-    {
-        return response()->json([
-
-            'status'=>'Failed',
-            'message'=>'Request Failed',
-            
-
-        ],500);
-    }
-
+    $email=$request->header('email');
+    $user=User::where('email','=',$email)->first();
+    return response()->json([
+        'status' => 'success',
+        'message' => 'Request Successful',
+        'data' => $user
+    ],200);
 }
 
 function updateProfile(Request $request){
+    sleep(10);
     try{
 
 
@@ -277,8 +263,8 @@ function updateProfile(Request $request){
             'firstName'=>$firstName,
             'lastName'=>$lastName,
              'mobile'=>$mobile,
-             'password'=>$password
-        ]);
+            'password'=>$password
+        ],200);
     
         return response()->json([
               'status'=>'success',

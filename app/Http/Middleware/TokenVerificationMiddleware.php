@@ -18,7 +18,7 @@ class TokenVerificationMiddleware
     {
         $token = $request->cookie('token');
         $result = JWT_TOKEN::verify_token($token);
-        echo $token;
+        
         
         if($result=='unauthorized' || $result==null)
         {
