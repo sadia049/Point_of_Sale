@@ -41,15 +41,17 @@
             let res = await axios.post("/create-category",{name:categoryName})
             hideLoader();
 
-            if(res.status===201){
+            if(res.status===201){   
 
                 successToast('Request completed');
 
                 document.getElementById("save-form").reset();
-                setTimeout(function(){
-                    Window.Location.href = '/categoryPage';
-                },2000);
-                await getList();
+               
+
+                setTimeout(async function (){
+                    window.location.href='/categoryPage'
+            },2000)
+                //await getList();
             }
             else{
                 errorToast("Request fail !")

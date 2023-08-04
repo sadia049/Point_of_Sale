@@ -54,7 +54,10 @@
             if(res.status===200 && res.data===1){
                 document.getElementById("update-form").reset();
                 successToast("Request success !")
-                await getList();
+                setTimeout(async function (){
+                    window.location.href='/categoryPage'
+            },2000)
+                //await getList();
             }
             else{
                 errorToast("Request fail !")

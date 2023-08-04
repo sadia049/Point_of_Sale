@@ -39,9 +39,7 @@ class CategoryController extends Controller
     public function CategoryDelete(Request $request){
        // sleep(5);
 
-        return Category::where('id',$request->input('id'))->where('user_id',$request->header('id'))->delete([
-            'name'=>$request->input('name'),
-        ]);
+        return Category::where('id',$request->input('id'))->where('user_id',$request->header('id'))->delete();
 
      
 
