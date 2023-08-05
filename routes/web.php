@@ -3,6 +3,8 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PromotionalMailController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\TokenVerificationMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +44,7 @@ Route::get('/dashboard',[DashboardController::class,'dashboardView'])->middlewar
 Route::get('/profile',[UserController::class,'profilePageView'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/categoryPage',[CategoryController::class,'CategoryPage'])->middleware([TokenVerificationMiddleware::class]);
 Route::get('/customerPage',[CustomerController::class,'CustomerPage'])->middleware([TokenVerificationMiddleware::class]);
+Route::get('/productPage',[ProductController::class,'ProductPage'])->middleware([TokenVerificationMiddleware::class]);
 
 //Category API Routes
 Route::middleware([TokenVerificationMiddleware::class])->group(function(){
@@ -63,6 +66,33 @@ Route::middleware([TokenVerificationMiddleware::class])->group(function(){
 
 
 });
+
+//Product API
+
+
+Route::middleware([TokenVerificationMiddleware::class])->group(function(){
+
+    Route::post("/create-product",[ProductController::class,'CreateProduct']);
+    Route::post("/delete-product",[ProductController::class,'DeleteProduct']);
+    Route::post("/update-product",[ProductController::class,'UpdateProduct']);
+    Route::get("/list-product",[ProductController::class,'ProductList']);
+    Route::post("/product-by-id",[ProductController::class,'ProductByID']);
+    
+
+
+});
+
+//Promotional mail api
+Route::middleware(TokenVerificationMiddleware::class)->group(function(){
+    
+    Route::get('/send-promotion-page',[PromotionalMailController::class,'PromotionalMailPage']);
+    Route::post('/send-promotion',[PromotionalMailController::class,'PromotionalContent']);
+
+});
+
+
+  
+
 
 
 
