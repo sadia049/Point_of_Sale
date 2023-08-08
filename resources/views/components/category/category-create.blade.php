@@ -47,11 +47,7 @@
 
                 document.getElementById("save-form").reset();
                
-
-                setTimeout(async function (){
-                    window.location.href='/categoryPage'
-            },2000)
-                //await getList();
+                await getList();
             }
             else{
                 errorToast("Request fail !")

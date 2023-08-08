@@ -19,6 +19,7 @@
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Mobile</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="tableList">
@@ -40,6 +41,9 @@
             showLoader();
             let res = await axios.get('/list-customer');
             hideLoader();
+
+            tableData.DataTable().destroy();
+            tableList.empty();
 
             if (res.status === 200) {
 
@@ -81,10 +85,10 @@
 
                 })
 
-    // new DataTable('#tableData',{
-    //     order:[[0,'desc']],
-    //     lengthMenu:[4,8,16,20,30]
-    // });
+    new DataTable('#tableData',{
+        order:[[0,'desc']],
+        lengthMenu:[4,8,16,20,30]
+    });
             } else {
 
                 alert('Something went wrong');

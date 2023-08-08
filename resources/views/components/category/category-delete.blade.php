@@ -26,12 +26,9 @@
             hideLoader();
             if(res.status===200){
                 successToast("Request completed");
-               // document.getElementById("update-form").reset();
-                setTimeout(async function (){
-                    window.location.href='/categoryPage'
-            },2000)
-
-            //await getList();
+               
+               
+               await getList();
                 
             }
             else{

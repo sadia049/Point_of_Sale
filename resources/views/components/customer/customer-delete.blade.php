@@ -29,9 +29,7 @@
             if (res.status === 200) {
                 successToast("Request completed");
 
-                setTimeout(async function() {
-                    window.location.href = '/customerPage'
-                }, 2000)
+                await getList();
 
 
             } else {

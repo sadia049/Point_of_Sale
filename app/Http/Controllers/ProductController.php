@@ -23,7 +23,7 @@ class ProductController extends Controller
 
         //upload image in public uploads/product-image folder
 
-        $image->move(public_path('uploads/product-image'),$image_name);
+        $image->move(public_path('uploads/product-image'),$image_name);     
         //save to db
         return Product::create([
 
@@ -65,6 +65,11 @@ class ProductController extends Controller
         $t=time();
         $image_name = "$user_id-$t-$file_name";
         $img_url = "/uploads/product-image/$image_name";
+
+        
+        //upload image in public uploads/product-image folder
+
+        $image->move(public_path('uploads/product-image'),$image_name); 
 
         //Delete Old file
            

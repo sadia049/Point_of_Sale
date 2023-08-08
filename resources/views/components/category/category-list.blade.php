@@ -32,6 +32,9 @@
 <script>
     getList();
     async function getList() {
+
+        let tableData = $("#tableData");
+        let tableList = $("#tableList");
         showLoader();
 
         let res = await axios.get('/list-category');
@@ -39,8 +42,10 @@
 
         hideLoader();
 
-        let tableData = $("#tableData");
-        let tableList = $("#tableList");
+        
+
+        tableData.DataTable().destroy();
+        tableList.empty();
 
         res.data.forEach(function(item, index) {
 
@@ -78,12 +83,12 @@
 
 
 
-        // new DataTable('#tableData', {
-        //     order: [
-        //         [0, 'desc']
-        //     ],
-        //     lengthMenu: [5, 10, 15, 20, 30]
-        // });
+        new DataTable('#tableData', {
+            order: [
+                [0, 'asc']
+            ],
+            lengthMenu: [5, 10, 15, 20, 30]
+        });
 
 
     }
